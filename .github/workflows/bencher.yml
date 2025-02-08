@@ -396,6 +396,19 @@ jobs:
           mold-version: ${{ env.MOLD_VERSION }}
       - run: cargo audit
 
+  # Cargo Deny
+  cargo_deny:
+    name: Cargo Deny
+    runs-on: ubuntu-22.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          log-level: warn
+          command: check
+          arguments: --all-features
+
   # Cargo Unused Deps
   cargo_udeps:
     name: Cargo Unused Deps
@@ -845,6 +858,7 @@ jobs:
       - npx_biome_format
       - npx_biome_lint
       - check_generated
+      - cargo_deny
       # Test
       - cargo_test
       - api_smoke_test
@@ -905,6 +919,8 @@ jobs:
         run: flyctl deploy --local-only --config fly/fly.toml --wait-timeout 300
       - name: Rebase main on cloud
         run: |
+            git config --global user.name "Bencher"
+            git config --global user.email "git@bencher.dev"
             git fetch origin cloud
             git checkout cloud
             git pull
@@ -996,6 +1012,7 @@ jobs:
       - npx_biome_format
       - npx_biome_lint
       - check_generated
+      - cargo_deny
       # Test
       - cargo_test
       - api_smoke_test

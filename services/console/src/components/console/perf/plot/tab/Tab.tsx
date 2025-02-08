@@ -1,4 +1,10 @@
-import { type Accessor, Match, Switch, createMemo } from "solid-js";
+import {
+	type Accessor,
+	Match,
+	type Resource,
+	Switch,
+	createMemo,
+} from "solid-js";
 import { PerfTab } from "../../../../../config/types";
 import type {
 	JsonBenchmark,
@@ -7,14 +13,14 @@ import type {
 	JsonReport,
 	JsonTestbed,
 } from "../../../../../types/bencher";
-import { DEFAULT_PAGE } from "../../PerfPanel";
-import type { TabList } from "./PlotTab";
-import ReportsTab from "./ReportsTab";
-import DimensionsTab from "./DimensionTab";
-import type { FieldHandler } from "../../../../field/Field";
 import { BACK_PARAM, encodePath } from "../../../../../util/url";
+import type { FieldHandler } from "../../../../field/Field";
 import type { Theme } from "../../../../navbar/theme/theme";
+import { DEFAULT_PAGE } from "../../PerfPanel";
+import DimensionsTab from "./DimensionTab";
+import type { TabList } from "./PlotTab";
 import PlotsTab from "./PlotsTab";
+import ReportsTab from "./ReportsTab";
 
 const Tab = (props: {
 	project_slug: Accessor<undefined | string>;
@@ -26,12 +32,17 @@ const Tab = (props: {
 	testbeds: Accessor<string[]>;
 	benchmarks: Accessor<string[]>;
 	measures: Accessor<string[]>;
+	// Selected
+	branches_selected: Resource<JsonBranch[]>;
+	testbeds_selected: Resource<JsonTestbed[]>;
+	benchmarks_selected: Resource<JsonBenchmark[]>;
 	// Tabs
 	reports_tab: TabList<JsonReport>;
 	branches_tab: TabList<JsonBranch>;
 	testbeds_tab: TabList<JsonTestbed>;
 	benchmarks_tab: TabList<JsonBenchmark>;
 	plots_tab: TabList<JsonPlot>;
+	selected: Accessor<number>;
 	loading: Accessor<boolean>;
 	tab: Accessor<PerfTab>;
 	per_page: Accessor<number>;
@@ -40,6 +51,9 @@ const Tab = (props: {
 	width: Accessor<number>;
 	reports_start_date: Accessor<undefined | string>;
 	reports_end_date: Accessor<undefined | string>;
+	handleBranchSelected: (uuid: string) => void;
+	handleTestbedSelected: (uuid: string) => void;
+	handleBenchmarkSelected: (uuid: string) => void;
 	handlePage: (page: number) => void;
 	handleChecked: (index?: number, slug?: string) => void;
 	handleSearch: FieldHandler;
@@ -59,6 +73,33 @@ const Tab = (props: {
 				return [];
 		}
 	});
+
+	const selected = createMemo(() => {
+		switch (props.tab()) {
+			case PerfTab.BRANCHES:
+				return props.branches_selected();
+			case PerfTab.TESTBEDS:
+				return props.testbeds_selected();
+			case PerfTab.BENCHMARKS:
+				return props.benchmarks_selected();
+			default:
+				return [];
+		}
+	});
+
+	const handleSelected = (uuid: string) => {
+		switch (props.tab()) {
+			case PerfTab.BRANCHES:
+				props.handleBranchSelected(uuid);
+				break;
+			case PerfTab.TESTBEDS:
+				props.handleTestbedSelected(uuid);
+				break;
+			case PerfTab.BENCHMARKS:
+				props.handleBenchmarkSelected(uuid);
+				break;
+		}
+	};
 
 	const tabList = createMemo(() => {
 		switch (props.tab()) {
@@ -100,25 +141,6 @@ const Tab = (props: {
 					<div class="columns is-centered">
 						<div class="column is-5">
 							<AddButton project_slug={props.project_slug} tab={props.tab} />
-						</div>
-					</div>
-				</div>
-			</Match>
-			<Match
-				when={
-					!props.loading() &&
-					tabList().length === 0 &&
-					props.page() !== DEFAULT_PAGE
-				}
-			>
-				<div class="box">
-					<div class="columns is-centered">
-						<div class="column is-5">
-							<BackButton
-								tab={props.tab}
-								page={props.page}
-								handlePage={props.handlePage}
-							/>
 						</div>
 					</div>
 				</div>
@@ -187,6 +209,7 @@ const Tab = (props: {
 					loading={props.loading}
 					tab={props.tab}
 					tabUuids={tabUuids}
+					selected={selected}
 					tabList={
 						tabList as Accessor<
 							TabList<JsonBranch | JsonTestbed | JsonBenchmark>
@@ -194,6 +217,7 @@ const Tab = (props: {
 					}
 					per_page={props.per_page}
 					search={props.search}
+					handleSelected={handleSelected}
 					handleChecked={props.handleChecked}
 					handleSearch={props.handleSearch}
 				/>
@@ -245,26 +269,6 @@ const AddButton = (props: {
 		>
 			{getText()}
 		</a>
-	);
-};
-
-const BackButton = (props: {
-	tab: Accessor<PerfTab>;
-	page: Accessor<number>;
-	handlePage: (page: number) => void;
-}) => {
-	return (
-		<button
-			class="button is-primary is-fullwidth"
-			type="button"
-			title="Go back to the previous page"
-			onMouseDown={(e) => {
-				e.preventDefault();
-				props.handlePage(props.page() - 1);
-			}}
-		>
-			That's all the {props.tab()}. Go back.
-		</button>
 	);
 };
 

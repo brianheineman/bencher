@@ -127,12 +127,14 @@ export enum Row {
 	BOOL = "bool",
 	SELECT = "select",
 	NESTED_TEXT = "nested_text",
+	REPORT = "report",
 }
 
 export enum Card {
 	FIELD = "field",
 	NESTED_FIELD = "nested_field",
 	REPORT = "report",
+	REPORT_TABLE = "report_table",
 }
 
 export enum Display {
@@ -152,6 +154,11 @@ export enum Display {
 	ADAPTER = "adapter",
 	THRESHOLD = "threshold",
 	MODEL_TEST = "model_test",
+}
+
+export enum ReportDimension {
+	BRANCH = "branch",
+	TESTBED = "testbed",
 }
 
 export enum PerfTab {
