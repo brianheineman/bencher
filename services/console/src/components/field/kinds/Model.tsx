@@ -13,6 +13,8 @@ import FieldKind from "../kind";
 import { createStore } from "solid-js/store";
 import Field from "../Field";
 
+export const MODEL_TEST_ICON = "fas fa-vial";
+
 export type InputValue = string | number | null | undefined;
 
 export interface Props {
@@ -34,7 +36,7 @@ export interface StatisticConfig {
 
 const STATISTIC_FIELDS = {
 	test: {
-		icon: "fas fa-vial",
+		icon: MODEL_TEST_ICON,
 	},
 	static_lower_boundary: {
 		type: "input",
@@ -115,37 +117,58 @@ const STATISTIC_FIELDS = {
 	},
 };
 
+export const fmtModelTest = (test: ModelTest) => {
+	switch (test) {
+		case ModelTest.Static:
+			return "Static";
+		case ModelTest.Percentage:
+			return "Percentage";
+		case ModelTest.ZScore:
+			return "z-score";
+		case ModelTest.TTest:
+			return "t-test";
+		case ModelTest.LogNormal:
+			return "Log Normal";
+		case ModelTest.Iqr:
+			return "Interquartile Range (IQR)";
+		case ModelTest.DeltaIqr:
+			return "Delta Interquartile Range (ΔIQR)";
+		default:
+			return "No Model";
+	}
+};
+
 const testValue = (selected: ModelTest) => {
 	return {
 		selected,
 		options: [
 			{
-				value: ModelTest.Static,
-				option: "Static",
-			},
-			{
 				value: ModelTest.Percentage,
-				option: "Percentage",
+				option: fmtModelTest(ModelTest.Percentage),
 			},
 			{
 				value: ModelTest.ZScore,
-				option: "z-score",
+				option: fmtModelTest(ModelTest.ZScore),
 			},
 			{
 				value: ModelTest.TTest,
-				option: "t-test",
+				option: fmtModelTest(ModelTest.TTest),
 			},
 			{
 				value: ModelTest.LogNormal,
-				option: "Log Normal",
+				option: fmtModelTest(ModelTest.LogNormal),
 			},
 			{
 				value: ModelTest.Iqr,
-				option: "Interquartile Range (IQR)",
+				option: fmtModelTest(ModelTest.Iqr),
 			},
 			{
 				value: ModelTest.DeltaIqr,
-				option: "Delta Interquartile Range (ΔIQR)",
+				option: fmtModelTest(ModelTest.DeltaIqr),
+			},
+			{
+				value: ModelTest.Static,
+				option: fmtModelTest(ModelTest.Static),
 			},
 		],
 	};
@@ -184,19 +207,19 @@ const testSelectConfig = (modelTest: ModelTest) => {
 export const testFragment = (modelTest: ModelTest) => {
 	switch (modelTest) {
 		case ModelTest.Static:
-			return "static-thresholds";
+			return "static";
 		case ModelTest.Percentage:
-			return "percentage-thresholds";
+			return "percentage";
 		case ModelTest.ZScore:
-			return "z-score-thresholds";
+			return "z-score";
 		case ModelTest.TTest:
-			return "t-test-thresholds";
+			return "t-test";
 		case ModelTest.LogNormal:
-			return "log-normal-thresholds";
+			return "log-normal";
 		case ModelTest.Iqr:
-			return "iqr-thresholds";
+			return "interquartile-range";
 		case ModelTest.DeltaIqr:
-			return "delta-iqr-thresholds";
+			return "delta-interquartile-range";
 	}
 };
 

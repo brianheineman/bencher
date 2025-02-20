@@ -15,8 +15,10 @@ import {
 	Operation,
 	ReportDimension,
 	Row,
+	ThresholdDimension,
 } from "../types";
 import { addPath, createdSlugPath, parentPath, viewSlugPath } from "../util";
+import IconTitle from "../../components/site/IconTitle";
 
 export const BRANCH_ICON = "fas fa-code-branch";
 
@@ -41,7 +43,8 @@ const branchesConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Branches",
+			title: <IconTitle icon={BRANCH_ICON} title="Branches" />,
+			name: "Branches",
 			buttons: [
 				{ kind: Button.SEARCH },
 				{ kind: Button.ARCHIVED },
@@ -186,6 +189,10 @@ const branchesConfig = {
 				{
 					kind: Card.REPORT_TABLE,
 					dimension: ReportDimension.BRANCH,
+				},
+				{
+					kind: Card.THRESHOLD_TABLE,
+					dimension: ThresholdDimension.BRANCH,
 				},
 			],
 			buttons: [

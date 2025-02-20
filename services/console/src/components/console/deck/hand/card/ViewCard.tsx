@@ -7,18 +7,20 @@ import {
 	Adapter,
 	type JsonBranch,
 	type JsonProject,
-	ModelTest,
+	type ModelTest,
 } from "../../../../../types/bencher";
 import { authUser } from "../../../../../util/auth";
 import { prettyPrintFloat } from "../../../../../util/convert";
 import { httpGet } from "../../../../../util/http";
 import { BACK_PARAM, encodePath } from "../../../../../util/url";
-import { testFragment } from "../../../../field/kinds/Model";
+import { fmtModelTest, testFragment } from "../../../../field/kinds/Model";
+import IconTitle from "../../../../site/IconTitle";
 import type CardConfig from "./CardConfig";
 
 export interface Props {
 	isConsole?: boolean;
 	apiUrl: string;
+	isBencherCloud: boolean;
 	params: Params;
 	card: CardConfig;
 	value: boolean | string | object;
@@ -27,7 +29,7 @@ export interface Props {
 
 const ViewCard = (props: Props) => {
 	const [is_allowed] = createResource(props.params, (params) =>
-		props.card?.is_allowed?.(props.apiUrl, params),
+		props.card?.is_allowed?.(props.apiUrl, params, props.isBencherCloud),
 	);
 
 	return (
@@ -47,8 +49,16 @@ const ViewCard = (props: Props) => {
 						}
 					})()}`}
 				>
-					{/* biome-ignore lint/a11y/noLabelWithoutControl: bulma form */}
-					<label class="label">{props.card?.label}</label>
+					<Show
+						when={props.card?.icon}
+						/* biome-ignore lint/a11y/noLabelWithoutControl: bulma form */
+						fallback={<label class="label">{props.card?.label}</label>}
+					>
+						{/* biome-ignore lint/a11y/noLabelWithoutControl: bulma form */}
+						<label class="label">
+							<IconTitle icon={props.card?.icon} title={props.card?.label} />
+						</label>
+					</Show>
 				</div>
 				<div class="field-body">
 					<div class="field is-expanded">
@@ -437,28 +447,7 @@ const ModelTestCard = (props: Props) => {
 			target="_blank"
 			class="icon-text has-text-link"
 		>
-			<span>
-				{(() => {
-					switch (props.value) {
-						case ModelTest.Static:
-							return "Static";
-						case ModelTest.Percentage:
-							return "Percentage";
-						case ModelTest.ZScore:
-							return "z-score";
-						case ModelTest.TTest:
-							return "t-test";
-						case ModelTest.LogNormal:
-							return "Log Normal";
-						case ModelTest.Iqr:
-							return "Interquartile Range (IQR)";
-						case ModelTest.DeltaIqr:
-							return "Delta Interquartile Range (ΔIQR)";
-						default:
-							return `${props.value}`;
-					}
-				})()}
-			</span>
+			<span>{fmtModelTest(props.value as ModelTest)}</span>
 			<span class="icon">
 				<i class="fas fa-book-open" />
 			</span>

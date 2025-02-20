@@ -1,5 +1,5 @@
+import * as Sentry from "@sentry/astro";
 import type { Params } from "astro";
-import bencher_valid_init, { type InitOutput } from "bencher_valid";
 import {
 	createEffect,
 	createMemo,
@@ -8,21 +8,21 @@ import {
 } from "solid-js";
 import consoleConfig from "../../../config/console";
 import {
-	Operation,
 	type BencherResource,
+	Operation,
 	resourceSingular,
 } from "../../../config/types";
 import { authUser } from "../../../util/auth";
 import { httpGet } from "../../../util/http";
 import { NotifyKind, pageNotify } from "../../../util/notify";
 import { pathname, useSearchParams } from "../../../util/url";
-import { validJwt } from "../../../util/valid";
+import { type InitValid, init_valid, validJwt } from "../../../util/valid";
 import Deck, { type DeckConfig } from "./hand/Deck";
 import DeckHeader, { type DeckHeaderConfig } from "./header/DeckHeader";
-import * as Sentry from "@sentry/astro";
 
 interface Props {
 	apiUrl: string;
+	isBencherCloud: boolean;
 	params: Params;
 	resource: BencherResource;
 }
@@ -33,9 +33,7 @@ export interface DeckPanelConfig {
 }
 
 const DeckPanel = (props: Props) => {
-	const [bencher_valid] = createResource(
-		async () => await bencher_valid_init(),
-	);
+	const [bencher_valid] = createResource(init_valid);
 	const [searchParams, _setSearchParams] = useSearchParams();
 	const user = authUser();
 	const config = createMemo<DeckPanelConfig>(
@@ -53,7 +51,7 @@ const DeckPanel = (props: Props) => {
 	});
 
 	const getData = async (fetcher: {
-		bencher_valid: InitOutput;
+		bencher_valid: InitValid;
 		token: string;
 	}) => {
 		const EMPTY_OBJECT = {};
@@ -72,7 +70,7 @@ const DeckPanel = (props: Props) => {
 					NotifyKind.ERROR,
 					`Lettuce romaine calm! Failed to get ${resourceSingular(
 						props.resource,
-					)}. Please, try again.`,
+					)}: ${error?.response?.data?.message}`,
 				);
 				return EMPTY_OBJECT;
 			});
@@ -108,6 +106,7 @@ const DeckPanel = (props: Props) => {
 							<Deck
 								isConsole={true}
 								apiUrl={props.apiUrl}
+								isBencherCloud={props.isBencherCloud}
 								params={props.params}
 								user={user}
 								config={config()?.deck}

@@ -1,18 +1,43 @@
-import { BENCHER_WORDMARK, BENCHER_WORDMARK_DARK } from "../../../util/ext";
+import {
+	BENCHER_WORDMARK,
+	BENCHER_WORDMARK_DARK,
+	BENCHER_WORDMARK_LIGHT,
+} from "../../../util/ext";
+
+// https://bulma.io/documentation/features/dark-mode/
+export const DATA_THEME = "data-theme";
 
 export const BENCHER_THEME_KEY = "BENCHER_THEME";
+export const LIGHT_THEME = "light";
+export const DARK_THEME = "dark";
 
 export enum Theme {
-	Light = "light",
-	Dark = "dark",
+	// biome-ignore lint/style/useLiteralEnumMembers: const reuse
+	Light = LIGHT_THEME,
+	// biome-ignore lint/style/useLiteralEnumMembers: const reuse
+	Dark = DARK_THEME,
 }
 
 export const THEME_TOGGLE_ID = "theme-toggle";
+export const LIGHT_THEME_ID = "light-theme";
+export const DARK_THEME_ID = "dark-theme";
 
 export enum ThemeId {
-	Light = "light-theme",
-	Dark = "dark-theme",
+	// biome-ignore lint/style/useLiteralEnumMembers: const reuse
+	Light = LIGHT_THEME_ID,
+	// biome-ignore lint/style/useLiteralEnumMembers: const reuse
+	Dark = DARK_THEME_ID,
 }
+
+export const getColorScheme = () => {
+	if (window.matchMedia("(prefers-color-scheme: light)").matches) {
+		return Theme.Light;
+	}
+	if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+		return Theme.Dark;
+	}
+	return;
+};
 
 export const getTheme = () => getCachedTheme() ?? getColorScheme();
 
@@ -30,13 +55,6 @@ const getCachedTheme = () => {
 		}
 	}
 	return null;
-};
-
-const getColorScheme = () => {
-	if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-		return Theme.Dark;
-	}
-	return Theme.Light;
 };
 
 export const storeTheme = (theme: Theme) =>
@@ -60,12 +78,14 @@ export const themeColor = (theme: Theme) => {
 	}
 };
 
-export const themeWordmark = (theme: Theme) => {
+export const themeWordmark = (theme: undefined | Theme) => {
 	switch (theme) {
 		case Theme.Light:
-			return BENCHER_WORDMARK;
+			return BENCHER_WORDMARK_LIGHT;
 		case Theme.Dark:
 			return BENCHER_WORDMARK_DARK;
+		default:
+			return BENCHER_WORDMARK;
 	}
 };
 

@@ -1,6 +1,18 @@
+import { type DataEntryMap, getCollection } from "astro:content";
 import type Collection from "../util/collection";
+import { splitPageId } from "../util/collection";
 import { type Language, defaultLang, showDefaultLang } from "./ui";
-import { getCollection } from "astro:content";
+
+export const getEnOnlyPaths = async (collection: Collection) => {
+	const pages = await getCollection(collection as keyof DataEntryMap);
+	return pages.filter(filterDraft).map((page) => {
+		const [_lang, slug] = splitPageId(page.id);
+		return {
+			params: { slug },
+			props: page,
+		};
+	});
+};
 
 export async function getEnPaths(collection: Collection) {
 	const pages = await getPaths(collection);
@@ -13,25 +25,29 @@ export async function getLangPaths(collection: Collection) {
 }
 
 async function getPaths(collection: Collection) {
-	const pages = await getCollection(collection);
+	const pages = await getCollection(collection as keyof DataEntryMap);
 	return pages.filter(filterDraft).map((page) => {
-		const [lang, ...slug] =
-			page.id.substring(0, page.id.lastIndexOf("."))?.split("/") ?? [];
+		const [lang, slug] = splitPageId(page.id);
 		return {
-			params: { lang, slug: slug.join("/") || undefined },
+			params: { lang, slug },
 			props: page,
 		};
 	});
 }
 
+export const getEnOnlyCollection = async (collection: Collection) => {
+	const pages = await getCollection(collection as keyof DataEntryMap);
+	return pages
+		.filter(filterDraft)
+		.sort((a, b) => a.data.sortOrder - b.data.sortOrder);
+};
+
 export async function getLangCollection(collection: Collection) {
-	const pages = await getCollection(collection);
+	const pages = await getCollection(collection as keyof DataEntryMap);
 	const langPagesMap = pages
 		.filter(filterDraft)
 		.map((page) => {
-			const [lang, ...slug] =
-				page.id.substring(0, page.id.lastIndexOf("."))?.split("/") ?? [];
-			page.slug = slug.join("/") || undefined;
+			const [lang, _slug] = splitPageId(page.id);
 			return { lang, page };
 		})
 		.reduce((lpMap, langPage) => {
@@ -54,7 +70,7 @@ export async function getLangCollection(collection: Collection) {
 export const langPath = (lang: Language) =>
 	!showDefaultLang && lang === defaultLang ? "" : `${lang}/`;
 
-const filterDraft = (page: { data: { draft: boolean } }): boolean => {
+const filterDraft = (page: { data: { draft?: boolean } }): boolean => {
 	switch (import.meta.env.MODE) {
 		case "development":
 			return true;
@@ -63,13 +79,6 @@ const filterDraft = (page: { data: { draft: boolean } }): boolean => {
 		default:
 			return false;
 	}
-};
-
-export const getEnCollection = async (collection: Collection) => {
-	const pages = await getCollection(collection);
-	return pages
-		.filter(filterDraft)
-		.sort((a, b) => a.data.sortOrder - b.data.sortOrder);
 };
 
 export const API_DOCS_PUBLISHED = "2024-02-12T07:26:00Z";

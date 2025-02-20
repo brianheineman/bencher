@@ -1,18 +1,18 @@
-import bencher_valid_init from "bencher_valid";
+import * as Sentry from "@sentry/astro";
+import { createEffect, createResource } from "solid-js";
+import type { JsonNewPlan } from "../../../types/bencher";
 import { authUser } from "../../../util/auth";
+import { httpPost } from "../../../util/http";
 import { NotifyKind, navigateNotify } from "../../../util/notify";
 import { useSearchParams } from "../../../util/url";
-import { PLAN_PARAM } from "../../auth/auth";
-import { createEffect, createResource } from "solid-js";
 import {
+	init_valid,
 	validJwt,
 	validOptionUuid,
 	validPlanLevel,
 	validU32,
 } from "../../../util/valid";
-import { httpPost } from "../../../util/http";
-import type { JsonNewPlan } from "../../../types/bencher";
-import * as Sentry from "@sentry/astro";
+import { PLAN_PARAM } from "../../auth/auth";
 
 export interface Props {
 	apiUrl: string;
@@ -20,9 +20,7 @@ export interface Props {
 }
 
 const CheckoutRedirect = (props: Props) => {
-	const [bencher_valid] = createResource(
-		async () => await bencher_valid_init(),
-	);
+	const [bencher_valid] = createResource(init_valid);
 	const user = authUser();
 	const [searchParams, _setSearchParams] = useSearchParams();
 

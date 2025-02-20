@@ -123,6 +123,18 @@ pub struct CliBackend {
     #[clap(long, env = "BENCHER_API_TOKEN")]
     pub token: Option<Jwt>,
 
+    /// Allow insecure connections to an HTTPS host
+    #[clap(long)]
+    pub insecure_host: bool,
+
+    /// Load TLS certificates from the platform's native certificate store
+    #[clap(long)]
+    pub native_tls: bool,
+
+    /// Request timeout
+    #[clap(long, value_name = "SECONDS", default_value = "15")]
+    pub timeout: u64,
+
     /// Request attempt(s)
     #[clap(long, value_name = "COUNT", default_value = "10")]
     pub attempts: usize,

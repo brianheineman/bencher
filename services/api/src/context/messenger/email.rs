@@ -4,7 +4,7 @@ use bencher_json::system::config::JsonSmtp;
 use bencher_json::Secret;
 use mail_send::{mail_builder::MessageBuilder, SmtpClientBuilder};
 use slog::{error, trace, Logger};
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 
 use super::body::FmtBody;
 use super::Message;
@@ -12,9 +12,9 @@ use crate::config::DEFAULT_SMTP_PORT;
 
 #[derive(Debug, Clone)]
 pub struct Email {
+    client: Arc<Mutex<Client>>,
     from_name: Option<String>,
     from_email: String,
-    client: Arc<RwLock<Client>>,
 }
 
 impl From<JsonSmtp> for Email {
@@ -22,22 +22,25 @@ impl From<JsonSmtp> for Email {
         let JsonSmtp {
             hostname,
             port,
+            insecure_host,
             starttls,
             username,
             secret,
             from_name,
             from_email,
         } = smtp;
+        let client_builder = ClientBuilder {
+            hostname: hostname.into(),
+            port: port.unwrap_or(DEFAULT_SMTP_PORT),
+            insecure_host: insecure_host.unwrap_or_default(),
+            starttls: starttls.unwrap_or(true),
+            username: username.into(),
+            secret,
+        };
         Self {
+            client: Arc::new(Mutex::new(client_builder.into())),
             from_name: Some(from_name.into()),
             from_email: from_email.into(),
-            client: Arc::new(RwLock::new(Client::new(
-                hostname.into(),
-                port.unwrap_or(DEFAULT_SMTP_PORT),
-                starttls.unwrap_or(true),
-                username.into(),
-                secret,
-            ))),
         }
     }
 }
@@ -75,7 +78,7 @@ impl Email {
         let send_log = log.clone();
         let send_client = self.client.clone();
         tokio::spawn(async move {
-            let mut client = send_client.write().await;
+            let mut client = send_client.lock().await;
             match client.send(&send_log, message_builder).await {
                 Ok(()) => trace!(send_log, "Email sent email from {from_email} to {to_email}"),
                 Err(err) => {
@@ -91,66 +94,80 @@ impl Email {
     }
 }
 
-struct Client {
+#[derive(Debug, Clone)]
+struct ClientBuilder {
     hostname: String,
     port: u16,
+    insecure_host: bool,
     starttls: bool,
     username: String,
     secret: Secret,
-    inner: Option<mail_send::SmtpClient<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>>,
+}
+
+impl ClientBuilder {
+    // Connect to an SMTP relay server and authenticate using the provided credentials.
+    fn build(&self) -> SmtpClientBuilder<String> {
+        let mut builder = SmtpClientBuilder::new(self.hostname.clone(), self.port);
+
+        if self.insecure_host {
+            builder = builder.allow_invalid_certs();
+        }
+
+        builder
+            .implicit_tls(!self.starttls)
+            .credentials((self.username.clone(), String::from(self.secret.clone())))
+    }
+}
+
+struct Client {
+    builder: ClientBuilder,
+    handle: Option<mail_send::SmtpClient<tokio_rustls::client::TlsStream<tokio::net::TcpStream>>>,
 }
 
 impl fmt::Debug for Client {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("Client")
-            .field("hostname", &self.hostname)
-            .field("port", &self.port)
-            .field("starttls", &self.starttls)
-            .field("username", &self.username)
-            .field("secret", &"************")
-            .field("inner", &if self.inner.is_some() { "Some" } else { "None" })
+            .field("client_builder", &self.builder)
+            .field(
+                "handle",
+                &if self.handle.is_some() {
+                    "Connected"
+                } else {
+                    "Disconnected"
+                },
+            )
             .finish()
     }
 }
 
-impl Client {
-    fn new(hostname: String, port: u16, starttls: bool, username: String, secret: Secret) -> Self {
+impl From<ClientBuilder> for Client {
+    fn from(builder: ClientBuilder) -> Self {
         Self {
-            hostname,
-            port,
-            username,
-            secret,
-            starttls,
-            inner: None,
+            builder,
+            handle: None,
         }
     }
+}
 
-    // Connect to an SMTP relay server over TLS and
-    // authenticate using the provided credentials.
-    fn new_client_builder(&self) -> SmtpClientBuilder<String> {
-        SmtpClientBuilder::new(self.hostname.clone(), self.port)
-            .credentials((self.username.clone(), String::from(self.secret.clone())))
-            .implicit_tls(!self.starttls)
-    }
-
+impl Client {
     async fn send(
         &mut self,
         log: &Logger,
         message_builder: MessageBuilder<'_>,
     ) -> Result<(), mail_send::Error> {
         // If there isn't a client or if the client is no longer connected, create a new one.
-        let client = if let Some(client) = self.inner.as_mut() {
+        let client = if let Some(client) = self.handle.as_mut() {
             if client.noop().await.is_ok() {
                 client
             } else {
                 slog::debug!(log, "Refreshing client");
-                let new_client = self.new_client_builder().connect().await?;
-                self.inner.insert(new_client)
+                let new_client = self.builder.build().connect().await?;
+                self.handle.insert(new_client)
             }
         } else {
             slog::debug!(log, "Creating new client");
-            let new_client = self.new_client_builder().connect().await?;
-            self.inner.insert(new_client)
+            let new_client = self.builder.build().connect().await?;
+            self.handle.insert(new_client)
         };
 
         client.send(message_builder).await

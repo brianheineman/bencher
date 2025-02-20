@@ -1,9 +1,10 @@
 [package]
 name = "bencher_api"
-license.workspace = true
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license-file.workspace = true
+publish = false
 
 [features]
 default = ["plus", "sentry"]
@@ -53,6 +54,7 @@ slog.workspace = true
 slug.workspace = true
 thiserror.workspace = true
 tokio = { workspace = true, features = ["fs", "rt-multi-thread"] }
+tokio-rustls.workspace = true
 url.workspace = true
 uuid = { workspace = true, features = ["v4", "serde"] }
 # Crate
@@ -61,17 +63,14 @@ aws-credential-types = "1.2"
 aws-sdk-s3 = { version = "1.57", features = ["behavior-version-latest"] }
 css-inline = "0.14"
 diesel_migrations = "2.2"
-# See `tokio-rustls` below
-mail-send = "=0.4.8"
+# https://github.com/stalwartlabs/mail-send/blob/962518a299c5b6da5c44d9f4e090a10d14e8a236/Cargo.toml#L37
+# https://github.com/bencherdev/bencher/issues/525
+mail-send = "0.5"
 paste = "1.0"
-sentry = { version = "0.34", optional = true, default-features = false, features = [
+sentry = { version = "0.36", optional = true, default-features = false, features = [
     "reqwest",
     "rustls",
 ] }
-# https://github.com/rustls/rustls/issues/1913
-# https://github.com/algesten/ureq/issues/765
-# https://github.com/rustls/rustls/releases/tag/v%2F0.23.0
-tokio-rustls = "=0.25"
 
 # https://github.com/diesel-rs/diesel/blob/ba2f567b038179d16cea939c0bcaaecc216ea947/diesel/Cargo.toml#L19
 # https://github.com/tauri-apps/tauri/discussions/6183

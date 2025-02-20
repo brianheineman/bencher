@@ -193,6 +193,29 @@ export const architecture = (lang: Language) => {
 	}
 };
 
+export const schema = (lang: Language) => {
+	switch (lang) {
+		case Language.en:
+			return "Database Schema";
+		case Language.de:
+			return "Datenbankschema";
+		case Language.es:
+			return "Esquema de base de datos";
+		case Language.fr:
+			return "Schéma de base de données";
+		case Language.ja:
+			return "データベーススキーマ";
+		case Language.ko:
+			return "데이터베이스 스키마";
+		case Language.pt:
+			return "Esquema de Banco de Dados";
+		case Language.ru:
+			return "Схема базы данных";
+		case Language.zh:
+			return "数据库架构";
+	}
+};
+
 export const benchmarking = (lang: Language) => {
 	switch (lang) {
 		case Language.en:

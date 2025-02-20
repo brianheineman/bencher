@@ -1,15 +1,21 @@
 ---
 export const prerender = false;
 
+import { BENCHER_API_URL } from "astro:env/server";
+import { IS_BENCHER_CLOUD } from "astro:env/client";
+
 import OrgLayout from "../../../../layouts/console/OrgLayout.astro";
 import BillingPanel from "../../../../components/console/billing/BillingPanel";
 
-// Using `meta.env` requires `prerender = false`
-const BENCHER_API_URL = import.meta.env.BENCHER_API_URL;
 const params = Astro.params;
 const title = "Billing";
 ---
 
 <OrgLayout apiUrl={BENCHER_API_URL} params={params} title={title}>
-  <BillingPanel client:only="solid-js" apiUrl={BENCHER_API_URL} params={params} />
+  <BillingPanel
+    client:only="solid-js"
+    apiUrl={BENCHER_API_URL}
+    isBencherCloud={IS_BENCHER_CLOUD}
+    params={params}
+  />
 </OrgLayout>

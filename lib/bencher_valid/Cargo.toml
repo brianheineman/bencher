@@ -1,9 +1,10 @@
 [package]
 name = "bencher_valid"
-license.workspace = true
 version.workspace = true
 authors.workspace = true
 edition.workspace = true
+license-file.workspace = true
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]
@@ -41,7 +42,7 @@ uuid = { workspace = true, features = ["serde"] }
 base64 = "0.22"
 console_error_panic_hook = { version = "0.1", optional = true }
 email_address = "0.2"
-gix-hash = "0.14"
+gix-hash = "0.16"
 git-validate = "0.7"
 regex = { version = "1.11", optional = true }
 regex-lite = { version = "0.1", optional = true }

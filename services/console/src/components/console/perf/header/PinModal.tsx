@@ -1,5 +1,7 @@
-import bencher_valid_init from "bencher_valid";
-import { type Accessor, createSignal, createResource } from "solid-js";
+import * as Sentry from "@sentry/astro";
+import { type Accessor, createResource, createSignal } from "solid-js";
+import { createStore } from "solid-js/store";
+import { PLOT_FIELDS } from "../../../../config/project/plot";
 import type {
 	JsonAuthUser,
 	JsonNewPlot,
@@ -8,13 +10,11 @@ import type {
 	XAxis,
 } from "../../../../types/bencher";
 import { httpPost } from "../../../../util/http";
+import { NotifyKind, pageNotify } from "../../../../util/notify";
+import { useNavigate } from "../../../../util/url";
+import { init_valid } from "../../../../util/valid";
 import Field, { type FieldHandler } from "../../../field/Field";
 import FieldKind from "../../../field/kind";
-import { useNavigate } from "../../../../util/url";
-import { createStore } from "solid-js/store";
-import { NotifyKind, pageNotify } from "../../../../util/notify";
-import { PLOT_FIELDS } from "../../../../config/project/plot";
-import * as Sentry from "@sentry/astro";
 
 export interface Props {
 	apiUrl: string;
@@ -36,9 +36,7 @@ export interface Props {
 }
 
 const PinModal = (props: Props) => {
-	const [bencher_valid] = createResource(
-		async () => await bencher_valid_init(),
-	);
+	const [bencher_valid] = createResource(init_valid);
 	const navigate = useNavigate();
 
 	const [form, setForm] = createStore(initForm());
@@ -108,7 +106,10 @@ const PinModal = (props: Props) => {
 				setSubmitting(false);
 				console.error(error);
 				Sentry.captureException(error);
-				pageNotify(NotifyKind.ERROR, "Failed to save plot. Please, try again.");
+				pageNotify(
+					NotifyKind.ERROR,
+					`Failed to save plot: ${error?.response?.data?.message}`,
+				);
 			});
 	};
 

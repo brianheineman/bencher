@@ -15,8 +15,10 @@ import {
 	Operation,
 	ReportDimension,
 	Row,
+	ThresholdDimension,
 } from "../types";
 import { addPath, createdSlugPath, parentPath, viewSlugPath } from "../util";
+import IconTitle from "../../components/site/IconTitle";
 
 export const TESTBED_ICON = "fas fa-server";
 
@@ -41,7 +43,8 @@ const testbedsConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Testbeds",
+			title: <IconTitle icon={TESTBED_ICON} title="Testbeds" />,
+			name: "Testbeds",
 			buttons: [
 				{ kind: Button.SEARCH },
 				{ kind: Button.ARCHIVED },
@@ -177,6 +180,10 @@ const testbedsConfig = {
 				{
 					kind: Card.REPORT_TABLE,
 					dimension: ReportDimension.TESTBED,
+				},
+				{
+					kind: Card.THRESHOLD_TABLE,
+					dimension: ThresholdDimension.TESTBED,
 				},
 			],
 			buttons: [

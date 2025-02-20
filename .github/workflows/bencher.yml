@@ -28,8 +28,11 @@ env:
   GLIBC_VERSION: 2.17
   # WASM
   WASM_BENCHER_VALID: bencher-valid-pkg
+  # Typeshare
+  TYPESHARE_VERSION: 1.13.2
   # Console
   CONSOLE_DOCKER_IMAGE: bencher-console
+  NETLIFY_CLI_VERSION: 18.0.4
   # Dev Container
   DEV_CONTAINER_DOCKER_IMAGE: bencher-dev-container
   # Cache
@@ -185,6 +188,12 @@ jobs:
       - name: Generate OpenAPI Spec
         run: cargo gen-spec
       - name: Check OpenAPI Spec for changes
+        run: git diff --exit-code
+      - name: Install Typeshare CLI
+        run: cargo install typeshare-cli --version $TYPESHARE_VERSION --locked
+      - name: Generate Typescript Types
+        run: cargo gen-ts
+      - name: Check Typescript Types for changes
         run: git diff --exit-code
       - name: Generate Unix CLI install scripts
         run: cargo gen-installer sh
@@ -407,7 +416,7 @@ jobs:
         with:
           log-level: warn
           command: check
-          arguments: --all-features
+          arguments: --locked
 
   # Cargo Unused Deps
   cargo_udeps:
@@ -569,7 +578,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build API Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./services/api/Dockerfile
@@ -737,7 +746,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Console Docker Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./services/console/Dockerfile
@@ -773,8 +782,11 @@ jobs:
         working-directory: ./services/console
         run: npm run netlify
       - name: Test Links
+        # If there are timeouts checking links,
+        # this step can take a long time to fail.
+        timeout-minutes: 3
         continue-on-error: true
-        uses: lycheeverse/lychee-action@v2.0.2
+        uses: lycheeverse/lychee-action@v2.3.0
         with:
           args: --config ./services/console/lychee.toml ./services/console/dist
 
@@ -944,9 +956,12 @@ jobs:
           path: ./lib/bencher_valid/pkg
       - name: Build Console UI
         working-directory: ./services/console
+        env:
+          SENTRY_UPLOAD: true
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run netlify
       - name: Install Netlify CLI
-        run: npm install --save-dev netlify-cli@17.27.0
+        run: npm install --save-dev netlify-cli@$NETLIFY_CLI_VERSION
       - name: Deploy Console UI to Netlify Dev
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -978,9 +993,12 @@ jobs:
           path: ./lib/bencher_valid/pkg
       - name: Build Console UI
         working-directory: ./services/console
+        env:
+          SENTRY_UPLOAD: true
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: npm run netlify
       - name: Install Netlify CLI
-        run: npm install --save-dev netlify-cli@17.27.0
+        run: npm install --save-dev netlify-cli@$NETLIFY_CLI_VERSION
       - name: Deploy Console UI to Netlify
         env:
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
@@ -990,7 +1008,6 @@ jobs:
           npx netlify-cli \
           deploy \
           --prod \
-          --alias ${GITHUB_REF#refs/*/} \
           --message "$DEPLOY_MESSAGE" \
           --json \
           | tee netlify.json

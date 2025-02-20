@@ -1,24 +1,26 @@
+import FieldKind from "../../components/field/kind";
+import IconTitle from "../../components/site/IconTitle";
 import type { JsonOrganization } from "../../types/bencher";
-import { ActionButton, Button, Card, Display, Row } from "../types";
-import { addPath, createdSlugPath, parentPath, viewSlugPath } from "../util";
-import { Operation } from "../types";
-import type { Params } from "../../util/url";
 import {
 	isAllowedOrganizationDelete,
 	isAllowedOrganizationEdit,
 	isAllowedOrganizationManage,
 } from "../../util/auth";
-import FieldKind from "../../components/field/kind";
-import { validResourceName, validOptionJwt, validSlug } from "../../util/valid";
-import { isBencherCloud } from "../../util/ext";
 import { removeOrganization, setOrganization } from "../../util/organization";
+import type { Params } from "../../util/url";
+import { validOptionJwt, validResourceName, validSlug } from "../../util/valid";
+import { ActionButton, Button, Card, Display, Row } from "../types";
+import { Operation } from "../types";
+import { addPath, createdSlugPath, parentPath, viewSlugPath } from "../util";
+
+const ORGANIZATION_ICON = "fas fa-sitemap";
 
 const ORGANIZATION_FIELDS = {
 	name: {
 		label: "Name",
 		type: "text",
 		placeholder: "Organization Name",
-		icon: "fas fa-project-diagram",
+		icon: ORGANIZATION_ICON,
 		help: "Must be a non-empty string",
 		validate: validResourceName,
 	},
@@ -44,7 +46,8 @@ const organizationsConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Organizations",
+			title: <IconTitle icon={ORGANIZATION_ICON} title="Organizations" />,
+			name: "Organizations",
 			buttons: [
 				{ kind: Button.SEARCH },
 				{
@@ -157,8 +160,11 @@ const organizationsConfig = {
 					label: "License Key",
 					key: "license",
 					display: Display.RAW,
-					is_allowed: (apiUrl: string, params: Params) =>
-						!isBencherCloud() && isAllowedOrganizationManage(apiUrl, params),
+					is_allowed: (
+						apiUrl: string,
+						params: Params,
+						isBencherCloud: boolean,
+					) => !isBencherCloud && isAllowedOrganizationManage(apiUrl, params),
 					field: {
 						kind: FieldKind.INPUT,
 						label: "License Key",

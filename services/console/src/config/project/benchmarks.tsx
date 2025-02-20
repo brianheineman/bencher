@@ -9,6 +9,7 @@ import {
 	isAllowedProjectDelete,
 	isAllowedProjectEdit,
 } from "../../util/auth";
+import IconTitle from "../../components/site/IconTitle";
 
 export const BENCHMARK_ICON = "fas fa-tachometer-alt";
 
@@ -33,7 +34,8 @@ const benchmarksConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Benchmarks",
+			title: <IconTitle icon={BENCHMARK_ICON} title="Benchmarks" />,
+			name: "Benchmarks",
 			buttons: [
 				{ kind: Button.SEARCH },
 				{ kind: Button.ARCHIVED },

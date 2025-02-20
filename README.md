@@ -2,7 +2,7 @@
   <a href="https://bencher.dev">
     <img
       src="https://bencher.dev/favicon.svg"
-      alt="🐰 Bencher"
+      aria-label="🐰 Bencher"
       width=32
     />
   </a>
@@ -316,7 +316,7 @@ Otherwise, it will default to using the latest CLI version.
 ```yaml
 - uses: bencherdev/bencher@main
   with:
-    version: 0.4.34
+    version: 0.4.36
 ```
 
 Specify an exact version if using [Bencher _Self-Hosted_](https://bencher.dev/docs/explanation/bencher-self-hosted/).
@@ -429,6 +429,8 @@ The easiest way to contribute is to open this repo as a [Dev Container](https://
 Everything you need will already be there!
 Once set up, both the UI and API should be built, running, and seeded at [localhost:3000](http://localhost:3000) and [localhost:61016](http://localhost:61016) respectively.
 To make any changes to the UI or API though, you will have to exit the startup process and restart the UI and API yourself.
+
+For additional information on contributing, see the [Development Getting Started](DEVELOPMENT.md) guide.
 
 #### 🐰 All pull requests should target the `devel` branch
 

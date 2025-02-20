@@ -1,9 +1,10 @@
-import { For, type Accessor } from "solid-js";
+import { type Accessor, For } from "solid-js";
 import type { PlanLevel } from "../../../types/bencher";
-import { Theme, themeWordmark } from "../../navbar/theme/theme";
+import Wordmark from "../../navbar/Wordmark";
+import { type Theme, themeWordmark } from "../../navbar/theme/theme";
 
 export interface Props {
-	theme?: Theme;
+	theme?: Accessor<Theme>;
 	step: OnboardStep;
 	plan?: Accessor<PlanLevel>;
 }
@@ -31,7 +32,7 @@ const stepPath = (step: OnboardStep) => {
 	}
 };
 
-const OnboardSteps = (props: Props) => {
+const OnboardStepsInner = (props: Props) => {
 	const stepHref = (step: OnboardStep) => {
 		const path = stepPath(step);
 		const plan = props.plan?.();
@@ -45,12 +46,7 @@ const OnboardSteps = (props: Props) => {
 					<div class="column is-half">
 						<div class="content has-text-centered">
 							<div title="Bencher - Continuous Benchmarking">
-								<img
-									src={themeWordmark(props.theme ?? Theme.Light)}
-									width="150"
-									height="28.25"
-									alt="🐰 Bencher"
-								/>
+								<Wordmark src={themeWordmark(props.theme?.())} />
 							</div>
 						</div>
 						<br />
@@ -94,4 +90,4 @@ const OnboardSteps = (props: Props) => {
 	);
 };
 
-export default OnboardSteps;
+export default OnboardStepsInner;

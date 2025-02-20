@@ -1,26 +1,28 @@
+import { Language } from "../i18n/ui";
+
 enum Collection {
 	// Legal
 	legal = "legal",
 	// Docs
-	docs_tutorial = "docs-tutorial",
-	docs_how_to = "docs-how-to",
-	docs_explanation = "docs-explanation",
-	docs_reference = "docs-reference",
+	docs_tutorial = "docs_tutorial",
+	docs_how_to = "docs_how_to",
+	docs_explanation = "docs_explanation",
+	docs_reference = "docs_reference",
 	// API
-	api_organizations = "api-organizations",
-	api_projects = "api-projects",
-	api_users = "api-users",
-	api_server = "api-server",
+	api_organizations = "api_organizations",
+	api_projects = "api_projects",
+	api_users = "api_users",
+	api_server = "api_server",
 	// Learn
-	benchmarking_cpp = "benchmarking-cpp",
-	benchmarking_python = "benchmarking-python",
-	benchmarking_rust = "benchmarking-rust",
-	track_in_ci_cpp = "track-in-ci-cpp",
-	track_in_ci_python = "track-in-ci-python",
-	track_in_ci_rust = "track-in-ci-rust",
-	case_study = "case-study",
+	benchmarking_cpp = "benchmarking_cpp",
+	benchmarking_python = "benchmarking_python",
+	benchmarking_rust = "benchmarking_rust",
+	track_in_ci_cpp = "track_in_ci_cpp",
+	track_in_ci_python = "track_in_ci_python",
+	track_in_ci_rust = "track_in_ci_rust",
+	case_study = "case_study",
 	engineering = "engineering",
-	// Onboard,
+	// Onboard
 	onboard = "onboard",
 }
 
@@ -71,5 +73,20 @@ export const collectionPath = (collection: Collection) => {
 			return "onboard";
 	}
 };
+
+export const splitPageId = (page_id: string): [undefined | string, string] => {
+	const langPattern = `^(${Object.values(Language).join("|")})/`;
+	const lang = page_id.match(new RegExp(langPattern))?.[1];
+	if (lang) {
+		const slug = page_id
+			.replace(new RegExp(langPattern), "")
+			.replace(/\.mdx$/, "");
+		return [lang, slug];
+	}
+	const slug = page_id.replace(/\.mdx$/, "");
+	return [lang, slug];
+};
+
+export const fmtPageId = (page_id: string) => splitPageId(page_id)[1];
 
 export default Collection;

@@ -1,4 +1,8 @@
 ---
+export const prerender = true;
+
+import { render } from "astro:content";
+
 import DocsLayout from "../../../../layouts/docs/DocsLayout.astro";
 import Disclosure from "../../../../components/docs/Disclosure";
 import { getLangPaths } from "../../../../i18n/utils";
@@ -7,16 +11,14 @@ import Collection from "../../../../util/collection";
 
 const collection = Collection.docs_explanation;
 
-// 1. Generate a new path for every collection entry
 export async function getStaticPaths() {
 	const collection = Collection.docs_explanation;
 	return await getLangPaths(collection);
 }
 
-// 2. When it's time to render, you can get the entry directly from the prop
 const { lang, slug } = Astro.params;
 const page = Astro.props;
-const { Content } = await page.render();
+const { Content } = await render(page);
 ---
 
 <DocsLayout

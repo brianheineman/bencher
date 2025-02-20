@@ -3,6 +3,7 @@ import { PubResourceKind } from "../../components/perf/util";
 import { isAllowedProjectEdit } from "../../util/auth";
 import { ActionButton, Button, Card, Display, Operation, Row } from "../types";
 import { parentPath, viewUuidPath } from "../util";
+import IconTitle from "../../components/site/IconTitle";
 
 export const ALERT_ICON = "fas fa-bell";
 export const ALERT_OFF_ICON = "far fa-bell-slash";
@@ -11,7 +12,8 @@ const alertsConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Alerts",
+			title: <IconTitle icon={ALERT_ICON} title="Alerts" />,
+			name: "Alerts",
 			buttons: [
 				{ kind: Button.DISMISS_ALL },
 				{ kind: Button.ARCHIVED },
@@ -37,30 +39,7 @@ const alertsConfig = {
 				text: "Learn about Thresholds & Alerts",
 			},
 			row: {
-				keys: [
-					["threshold", "branch", "name"],
-					["threshold", "testbed", "name"],
-					["benchmark", "name"],
-					["threshold", "measure", "name"],
-				],
-				items: [
-					{
-						kind: Row.TEXT,
-						key: "status",
-					},
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["threshold", "branch", "name"],
-					},
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["threshold", "testbed", "name"],
-					},
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["threshold", "measure", "name"],
-					},
-				],
+				kind: Row.ALERT,
 				button: {
 					text: "View",
 					path: viewUuidPath,

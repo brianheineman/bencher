@@ -1,4 +1,6 @@
 ---
+import { GOOGLE_ANALYTICS_ID } from "astro:env/client";
+
 import { SEO } from "astro-seo";
 import "../styles/styles.scss";
 import Navbar from "../components/navbar/Navbar.astro";
@@ -11,7 +13,7 @@ import {
 	TWITTER_BENCHER,
 	twitter,
 } from "../components/docs/author";
-// import { ViewTransitions } from "astro:transitions";
+// import { ClientRouter } from "astro:transitions";
 
 interface Props {
 	title: string;
@@ -26,8 +28,6 @@ interface Props {
 	theme?: undefined | string;
 }
 
-// https://docs.astro.build/en/reference/directives-reference/#definevars
-const PUBLIC_GOOGLE_ANALYTICS_ID = import.meta.env.PUBLIC_GOOGLE_ANALYTICS_ID;
 const {
 	title,
 	titleFmt,
@@ -171,18 +171,19 @@ const article = () => {
     <script defer src="https://use.fontawesome.com/releases/v5.15.4/js/all.js"></script>
     <!-- Google tag (gtag.js) -->
     <script
-      async
-      src={`https://www.googletagmanager.com/gtag/js?id=${PUBLIC_GOOGLE_ANALYTICS_ID}`}
+      type="text/partytown"
+      src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
     ></script>
-    <script define:vars={{ PUBLIC_GOOGLE_ANALYTICS_ID }}>
+    <script type="text/partytown" define:vars={{ GOOGLE_ANALYTICS_ID }}>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
       gtag("js", new Date());
-      gtag("config", PUBLIC_GOOGLE_ANALYTICS_ID);
+      gtag("config", GOOGLE_ANALYTICS_ID);
     </script>
-    <!-- <ViewTransitions /> -->
+    <!-- https://docs.astro.build/en/guides/view-transitions/ -->
+    <!-- <ClientRouter /> -->
   </head>
   <body>
     <slot name="navbar">

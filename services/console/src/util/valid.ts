@@ -1,4 +1,6 @@
-import {
+import * as Sentry from "@sentry/astro";
+import bencher_valid_init, {
+	type InitOutput,
 	is_valid_benchmark_name,
 	is_valid_boundary,
 	is_valid_branch_name,
@@ -25,7 +27,19 @@ import {
 } from "bencher_valid";
 import type { JsonAuthUser } from "../types/bencher";
 
-export const DEBOUNCE_DELAY = 250;
+export const DEBOUNCE_DELAY = 10;
+
+export type InitValid = undefined | InitOutput;
+
+export const init_valid = async (): Promise<InitValid> => {
+	try {
+		return await bencher_valid_init();
+	} catch (error) {
+		console.error(error);
+		Sentry.captureException(error);
+		return;
+	}
+};
 
 export const validString = (
 	input: string,

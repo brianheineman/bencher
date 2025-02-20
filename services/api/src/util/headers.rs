@@ -1,17 +1,15 @@
 use std::fmt;
 
 use dropshot::HttpError;
-use http::StatusCode;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::error::issue_error;
 
-const ALL_ORIGIN: &str = "*";
-const ALL_HEADERS: &str = "*";
+pub const ALL_ORIGIN: &str = "*";
 const PUB_HEADERS: &str = "Content-Type";
-const AUTH_HEADERS: &str = "Content-Type, Authorization";
-const EXPOSE_HEADERS: &str = "X-Total-Count";
+pub const AUTH_HEADERS: &str = "Content-Type, Authorization";
+pub const EXPOSE_HEADERS: &str = "X-Total-Count";
 
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
@@ -29,7 +27,7 @@ impl CorsHeaders {
         T: ToString,
     {
         let methods = methods_str(methods);
-        Self::new_origin_all(methods, ALL_HEADERS.to_owned(), None)
+        Self::new_origin_all(methods, AUTH_HEADERS.to_owned(), None)
     }
 
     pub fn new_with_total_count<T>(methods: &[T], total_count: TotalCount) -> Self
@@ -37,7 +35,7 @@ impl CorsHeaders {
         T: ToString,
     {
         let methods = methods_str(methods);
-        Self::new_origin_all(methods, ALL_HEADERS.to_owned(), Some(total_count))
+        Self::new_origin_all(methods, AUTH_HEADERS.to_owned(), Some(total_count))
     }
 
     pub fn new_pub<T>(methods: &T) -> Self
@@ -108,7 +106,6 @@ impl TryFrom<i64> for TotalCount {
         match u32::try_from(total_count) {
             Ok(total_count) => Ok(TotalCount(total_count)),
             Err(err) => Err(issue_error(
-                StatusCode::INTERNAL_SERVER_ERROR,
                 "Failed to count resource total.",
                 &format!("Failed to count resource total: {total_count}"),
                 err,

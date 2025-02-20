@@ -9,15 +9,26 @@ import { ActionButton, Button, Card, Display, Operation, Row } from "../types";
 import { addPath, createdUuidPath, parentPath, viewUuidPath } from "../util";
 import { PubResourceKind } from "../../components/perf/util";
 
+export const THRESHOLD_ICON = (
+	<span class="fa-stack fa-2x" style="font-size: 0.75em;">
+		<i class="fas fa-walking fa-stack-1x" />
+		<i class="fas fa-ban fa-stack-2x" />
+	</span>
+);
+
 const paginationUrl = (
 	params: undefined | Params,
 	dimension: string,
 	per_page: number,
 	page: number,
+	search: undefined | string,
 ) => {
 	const searchParams = new URLSearchParams();
 	searchParams.set("per_page", per_page?.toString());
 	searchParams.set("page", page?.toString());
+	if (search) {
+		searchParams.set("search", search.trim());
+	}
 	const url = `/v0/projects/${
 		params?.project
 	}/${dimension}?${searchParams.toString()}`;
@@ -30,24 +41,36 @@ const THRESHOLD_FIELDS = {
 		icon: "fas fa-code-branch",
 		option_key: "name",
 		value_key: "uuid",
-		url: (params: undefined | Params, per_page: number, page: number) =>
-			paginationUrl(params, "branches", per_page, page),
+		url: (
+			params: undefined | Params,
+			per_page: number,
+			page: number,
+			search: undefined | string,
+		) => paginationUrl(params, "branches", per_page, page, search),
 	},
 	testbed: {
 		name: "testbeds",
 		icon: "fas fa-server",
 		option_key: "name",
 		value_key: "uuid",
-		url: (params: undefined | Params, per_page: number, page: number) =>
-			paginationUrl(params, "testbeds", per_page, page),
+		url: (
+			params: undefined | Params,
+			per_page: number,
+			page: number,
+			search: undefined | string,
+		) => paginationUrl(params, "testbeds", per_page, page, search),
 	},
 	measure: {
 		name: "measures",
 		icon: "fas fa-shapes",
 		option_key: "name",
 		value_key: "uuid",
-		url: (params: undefined | Params, per_page: number, page: number) =>
-			paginationUrl(params, "measures", per_page, page),
+		url: (
+			params: undefined | Params,
+			per_page: number,
+			page: number,
+			search: undefined | string,
+		) => paginationUrl(params, "measures", per_page, page, search),
 	},
 };
 
@@ -55,7 +78,17 @@ const thresholdsConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Thresholds",
+			title: (
+				<div class="level is-mobile">
+					<div class="level-left">
+						<div class="level-item">
+							{THRESHOLD_ICON}
+							&nbsp;Thresholds
+						</div>
+					</div>
+				</div>
+			),
+			name: "Thresholds",
 			buttons: [
 				{ kind: Button.ARCHIVED },
 				{
@@ -85,26 +118,7 @@ const thresholdsConfig = {
 				text: "Add a Threshold",
 			},
 			row: {
-				keys: [
-					["branch", "name"],
-					["testbed", "name"],
-					["measure", "name"],
-				],
-				items: [
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["branch", "name"],
-					},
-					{},
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["testbed", "name"],
-					},
-					{
-						kind: Row.NESTED_TEXT,
-						keys: ["measure", "name"],
-					},
-				],
+				kind: Row.THRESHOLD,
 				button: {
 					text: "View",
 					path: viewUuidPath,

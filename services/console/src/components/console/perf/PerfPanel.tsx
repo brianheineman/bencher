@@ -1,7 +1,6 @@
 import * as Sentry from "@sentry/astro";
 import { debounce } from "@solid-primitives/scheduled";
 import type { Params } from "astro";
-import bencher_valid_init, { type InitOutput } from "bencher_valid";
 import {
 	Show,
 	createEffect,
@@ -38,7 +37,13 @@ import {
 } from "../../../util/convert";
 import { X_TOTAL_COUNT, httpGet } from "../../../util/http";
 import { useSearchParams } from "../../../util/url";
-import { DEBOUNCE_DELAY, validJwt, validU32 } from "../../../util/valid";
+import {
+	DEBOUNCE_DELAY,
+	type InitValid,
+	init_valid,
+	validJwt,
+	validU32,
+} from "../../../util/valid";
 import { themeSignal } from "../../navbar/theme/util";
 import PerfFrame from "./PerfFrame";
 import PerfHeader from "./header/PerfHeader";
@@ -172,6 +177,7 @@ const DEFAULT_REPORT_HISTORY = 30 * 24 * 60 * 60 * 1000;
 
 export interface Props {
 	apiUrl: string;
+	isBencherCloud: boolean;
 	params: Params;
 	isConsole?: boolean;
 	isEmbed?: boolean;
@@ -191,9 +197,7 @@ function resourcesToCheckable<T>(
 }
 
 const PerfPanel = (props: Props) => {
-	const [bencher_valid] = createResource(
-		async () => await bencher_valid_init(),
-	);
+	const [bencher_valid] = createResource(init_valid);
 
 	const params = createMemo(() => props.params);
 	const [searchParams, setSearchParams] = useSearchParams();
@@ -582,7 +586,7 @@ const PerfPanel = (props: Props) => {
 		perfTab: PerfTab,
 		memo: T[],
 		fetcher: {
-			bencher_valid: undefined | InitOutput;
+			bencher_valid: InitValid;
 			project_slug: undefined | string;
 			param_uuids: string[];
 			token: string;
@@ -711,7 +715,7 @@ const PerfPanel = (props: Props) => {
 	async function getPerfTab<T>(
 		perfTab: PerfTab,
 		fetcher: {
-			bencher_valid: undefined | InitOutput;
+			bencher_valid: InitValid;
 			project_slug: undefined | string;
 			per_page: number;
 			page: number;
@@ -1201,6 +1205,7 @@ const PerfPanel = (props: Props) => {
 				<PerfHeader
 					isConsole={props.isConsole === true}
 					apiUrl={props.apiUrl}
+					isBencherCloud={props.isBencherCloud}
 					user={user}
 					project={project}
 					isPlotInit={isPlotInit}

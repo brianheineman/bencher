@@ -1,13 +1,17 @@
 ---
 import {
 	architecture,
+	schema,
 	explanation,
 	howTo,
 	reference,
 	tutorial,
 } from "../../../i18n/ui.ts";
 import { getLangCollection, langPath } from "../../../i18n/utils.ts";
-import Collection, { collectionPath } from "../../../util/collection.ts";
+import Collection, {
+	collectionPath,
+	fmtPageId,
+} from "../../../util/collection.ts";
 
 interface Props {
 	lang: string;
@@ -52,21 +56,27 @@ const { lang } = Astro.props;
       <li>
         <a href={`/${langPath(lang)}docs/api/`}>REST API</a>
       </li>
+    ),
+    suffix: (
       <li>
         <a href={`/${langPath(lang)}docs/reference/architecture/`}>{architecture(lang)}</a>
       </li>
-    ),
+      <li>
+        <a href={`/${langPath(lang)}docs/reference/schema/`}>{schema(lang)}</a>
+      </li>
+    )
   }
-].map(({ label, collection, content, prefix }) => (
+].map(({ label, collection, content, prefix, suffix }) => (
   <p class="menu-label">{label}</p>
   <ul class="menu-list">
     {prefix}
     {
       content?.map((page) => (
         <li>
-          <a href={`/${langPath(lang)}docs/${collectionPath(collection)}/${page.slug}/`}>{page.data.title}</a>
+          <a href={`/${langPath(lang)}docs/${collectionPath(collection)}/${fmtPageId(page.id)}/`}>{page.data.title}</a>
         </li>
       ))
     }
+    {suffix}
   </ul>
 ))}

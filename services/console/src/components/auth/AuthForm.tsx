@@ -1,4 +1,3 @@
-import bencher_valid_init from "bencher_valid";
 import {
 	Show,
 	createEffect,
@@ -7,6 +6,7 @@ import {
 	createSignal,
 } from "solid-js";
 
+import * as Sentry from "@sentry/astro";
 import { createStore } from "solid-js/store";
 import {
 	type JsonLogin,
@@ -17,11 +17,10 @@ import {
 import { httpPost } from "../../util/http";
 import { NotifyKind, navigateNotify, pageNotify } from "../../util/notify";
 import { useSearchParams } from "../../util/url";
-import { validJwt, validPlanLevel } from "../../util/valid";
+import { init_valid, validJwt, validPlanLevel } from "../../util/valid";
 import Field, { type FieldHandler } from "../field/Field";
 import FieldKind from "../field/kind";
 import { AUTH_FIELDS, EMAIL_PARAM, INVITE_PARAM, PLAN_PARAM } from "./auth";
-import * as Sentry from "@sentry/astro";
 
 export interface Props {
 	apiUrl: string;
@@ -31,9 +30,7 @@ export interface Props {
 type JsonAuthForm = JsonSignup | JsonLogin;
 
 const AuthForm = (props: Props) => {
-	const [bencher_valid] = createResource(
-		async () => await bencher_valid_init(),
-	);
+	const [bencher_valid] = createResource(init_valid);
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const apiUrl = createMemo(() => props.apiUrl);
@@ -126,7 +123,7 @@ const AuthForm = (props: Props) => {
 				Sentry.captureException(error);
 				pageNotify(
 					NotifyKind.ERROR,
-					`Failed to ${props.newUser ? "signup" : "login"}. Please, try again.`,
+					`Failed to ${props.newUser ? "signup" : "login"}: ${error?.response?.data?.message}`,
 				);
 			});
 	};

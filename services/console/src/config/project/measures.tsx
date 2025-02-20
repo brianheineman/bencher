@@ -7,8 +7,17 @@ import {
 	isAllowedProjectEdit,
 } from "../../util/auth";
 import { validResourceName, validSlug } from "../../util/valid";
-import { ActionButton, Button, Card, Display, Operation, Row } from "../types";
+import {
+	ActionButton,
+	Button,
+	Card,
+	Display,
+	Operation,
+	Row,
+	ThresholdDimension,
+} from "../types";
 import { addPath, createdSlugPath, parentPath, viewSlugPath } from "../util";
+import IconTitle from "../../components/site/IconTitle";
 
 export const MEASURE_ICON = "fas fa-shapes";
 
@@ -40,7 +49,8 @@ const measuresConfig = {
 	[Operation.LIST]: {
 		operation: Operation.LIST,
 		header: {
-			title: "Measures",
+			title: <IconTitle icon={MEASURE_ICON} title="Measures" />,
+			name: "Measures",
 			buttons: [
 				{ kind: Button.SEARCH },
 				{ kind: Button.ARCHIVED },
@@ -198,6 +208,10 @@ const measuresConfig = {
 						validate: true,
 						config: MEASURE_FIELDS.units,
 					},
+				},
+				{
+					kind: Card.THRESHOLD_TABLE,
+					dimension: ThresholdDimension.MEASURE,
 				},
 			],
 			buttons: [
