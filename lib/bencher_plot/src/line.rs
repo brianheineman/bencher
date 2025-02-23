@@ -1,11 +1,10 @@
 use std::sync::LazyLock;
 use std::{io::Cursor, ops::Range};
-
 use bencher_json::{project::perf::JsonPerfMetrics, JsonPerf};
 use bencher_json::{JsonMeasure, Units};
 use chrono::{DateTime, Duration, Utc};
 use image::{GenericImageView, ImageBuffer};
-use ordered_float::OrderedFloat;
+use ordered_float::{FloatCore, OrderedFloat};
 use plotters::{
     coord::{types::RangedCoordf64, Shift},
     prelude::{
@@ -15,7 +14,9 @@ use plotters::{
     series::LineSeries,
     style::{Color, FontFamily, RGBColor, ShapeStyle, WHITE},
 };
-
+use plotters::chart::{ChartContext, DualCoordChartContext};
+use plotters::coord::ranged1d::{DefaultFormatting, KeyPointHint};
+use plotters::prelude::{Cartesian2d, IntoLogRange, LogCoord, RangedDateTime};
 use crate::PlotError;
 
 const IMG_WIDTH: u32 = 1024;
@@ -152,31 +153,67 @@ impl LinePlot {
     }
 }
 
+/// Create a Ranged type that can support either linear or log scaling
+enum RangedCoord {
+    Linear(RangedCoordf64),
+    Log(LogCoord<f64>),
+}
+
+impl Ranged for RangedCoord {
+    type FormatOption = DefaultFormatting;
+    type ValueType = f64;
+
+    fn map(&self, value: &f64, limit: (i32, i32)) -> i32 {
+        match self {
+            Self::Linear(coord) => coord.map(value, limit),
+            Self::Log(coord) => coord.map(value, limit),
+        }
+    }
+
+    fn key_points<Hint: KeyPointHint>(&self, hint: Hint) -> Vec<f64> {
+        match self {
+            Self::Linear(coord) => coord.key_points(hint),
+            Self::Log(coord) => coord.key_points(hint),
+        }
+    }
+
+    fn range(&self) -> Range<f64> {
+        match self {
+            Self::Linear(coord) => coord.range(),
+            Self::Log(coord) => coord.range(),
+        }
+    }
+}
+
+impl From<RangedCoordf64> for RangedCoord {
+    fn from(coord: RangedCoordf64) -> Self {
+        Self::Linear(coord)
+    }
+}
+
+impl From<LogCoord<f64>> for RangedCoord {
+    fn from(coord: LogCoord<f64>) -> Self {
+        Self::Log(coord)
+    }
+}
+
+
 // https://github.com/plotters-rs/plotters/blob/v0.3.7/plotters/examples/two-scales.rs
 #[allow(clippy::large_enum_variant, clippy::type_complexity)]
 enum Chart<'b> {
     Single(
-        plotters::chart::ChartContext<
+        ChartContext<
             'b,
             BitMapBackend<'b>,
-            plotters::prelude::Cartesian2d<
-                plotters::prelude::RangedDateTime<DateTime<Utc>>,
-                RangedCoordf64,
-            >,
+            Cartesian2d<RangedDateTime<DateTime<Utc>>, RangedCoord>,
         >,
     ),
     Dual(
-        plotters::chart::DualCoordChartContext<
+        DualCoordChartContext<
             'b,
             BitMapBackend<'b>,
-            plotters::prelude::Cartesian2d<
-                plotters::prelude::RangedDateTime<DateTime<Utc>>,
-                RangedCoordf64,
-            >,
-            plotters::prelude::Cartesian2d<
-                plotters::prelude::RangedDateTime<DateTime<Utc>>,
-                RangedCoordf64,
-            >,
+            Cartesian2d<RangedDateTime<DateTime<Utc>>, RangedCoord>,
+            Cartesian2d<RangedDateTime<DateTime<Utc>>, RangedCoord>,
         >,
     ),
 }
@@ -186,6 +223,21 @@ impl<'b> Chart<'b> {
         perf_data: &PerfData,
         plot_area: &DrawingArea<BitMapBackend<'b>, Shift>,
     ) -> Result<Self, PlotError> {
+        // Determine if a log scale should be used
+        let left_y_range = perf_data.left_y_range();
+        let relative_difference = if left_y_range.start == 0.0 {
+            left_y_range.end
+        } else {
+            left_y_range.end / left_y_range.start
+        };
+        let use_left_y_log_scaling = relative_difference >= 10.0;
+        let left_y_range = if use_left_y_log_scaling {
+            let range: LogCoord<f64> = left_y_range.log_scale().into(); 
+            RangedCoord::from(range)
+        } else {
+            let range: RangedCoordf64 = left_y_range.into();
+            RangedCoord::from(range)
+        };
         let chart_context = ChartBuilder::on(plot_area)
             .x_label_area_size(40)
             .y_label_area_size(perf_data.left_y_label_area_size()?)
@@ -193,9 +245,23 @@ impl<'b> Chart<'b> {
             .margin_left(8)
             .margin_right(32)
             .margin_bottom(8)
-            .build_cartesian_2d(perf_data.x_range(), perf_data.left_y_range())?;
+            .build_cartesian_2d(perf_data.x_range(), left_y_range)?;
 
         Ok(if let Some(right_y_range) = perf_data.right_y_range() {
+            // Determine if a log scale should be used
+            let relative_difference = if right_y_range.start == 0.0 {
+                right_y_range.end
+            } else {
+                right_y_range.end / right_y_range.start
+            };
+            let use_right_y_log_scaling = relative_difference >= 10.0;
+            let right_y_range = if use_right_y_log_scaling {
+                let range: LogCoord<f64> = right_y_range.log_scale().into();
+                RangedCoord::from(range)
+            } else {
+                let range: RangedCoordf64 = right_y_range.into();
+                RangedCoord::from(range)
+            };
             Self::Dual(chart_context.set_secondary_coord(perf_data.x_range(), right_y_range))
         } else {
             Self::Single(chart_context)
@@ -762,6 +828,11 @@ mod test {
         serde_json::from_str(PERF_DOT_JSON).expect("Failed to serialize perf JSON")
     });
 
+    pub const PERF_DUAL_AXES_DOT_JSON: &str = include_str!("../perf_dual_axes.json");
+    static JSON_PERF_DUAL_AXES: LazyLock<JsonPerf> = LazyLock::new(|| {
+        serde_json::from_str(PERF_DUAL_AXES_DOT_JSON).expect("Failed to serialize perf JSON")
+    });
+
     pub const DECIMAL_DOT_JSON: &str = include_str!("../decimal.json");
     static JSON_PERF_DECIMAL: LazyLock<JsonPerf> = LazyLock::new(|| {
         serde_json::from_str(DECIMAL_DOT_JSON).expect("Failed to serialize perf JSON")
@@ -782,6 +853,15 @@ mod test {
     }
 
     #[test]
+    fn test_plot_dual_axes() {
+        let plot = LinePlot::new();
+        let plot_buffer = plot
+            .draw(Some("Benchmark Adapter Comparison"), &JSON_PERF_DUAL_AXES)
+            .unwrap();
+        save_jpeg(&plot_buffer, "perf_dual_axes");
+    }
+
+    #[test]
     fn test_plot_decimal() {
         let plot = LinePlot::new();
         let plot_buffer = plot
@@ -789,7 +869,7 @@ mod test {
             .unwrap();
         save_jpeg(&plot_buffer, "decimal");
     }
-
+    
     #[test]
     fn test_plot_empty() {
         let plot = LinePlot::new();
